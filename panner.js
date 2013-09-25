@@ -1,4 +1,4 @@
-define(['require'], function() {
+define(['require'], function(require) {
   
     var pluginConf = {
         name: "Panner",
@@ -8,13 +8,15 @@ define(['require'], function() {
         version: '0.0.1-alpha1',
         ui: {
             type: 'canvas',
-            width: 400,
+            width: 300,
             height: 300
         }
 
     };
+
+    var imgResources = null;
   
-    var pluginFunction = function(args) {
+    var pluginFunction = function(args, resources) {
 
 
         // Draws a canvas and tracks mouse click/drags on the canvas.
@@ -51,17 +53,10 @@ define(['require'], function() {
                 obj.handleKeyDown.apply(obj, arguments);
             });
 
-            this.manIcon = new Image();
-            this.manIcon.src = 'http://www.html5rocks.com/en/tutorials/webaudio/games/res/man.svg';
-
-            this.speakerIcon = new Image();
-            this.speakerIcon.src = 'http://www.html5rocks.com/en/tutorials/webaudio/games/res/speaker.svg';
-
-            // Render the scene when the icon has loaded.
-            var ctx = this;
-            this.manIcon.onload = function() {
-                ctx.render();
-            }
+            this.manIcon = resources[0];
+            this.speakerIcon = resources[1];
+            this.render();
+            
         }
 
         Field.prototype.render = function() {
@@ -236,7 +231,37 @@ define(['require'], function() {
     var initPlugin = function(initArgs) {
         var args = initArgs;
 
-        pluginFunction.call (this, args);
+        console.log ("initArgs", initArgs);
+
+        var requireErr = function (err) {
+            args.hostInterface.setInstanceStatus ('fatal', {description: 'Error loading resources'});
+        }.bind(this);
+
+        console.log ("imgResources", imgResources);
+
+        if (imgResources === null) {
+            var resList = [ './assets/images/man.svg!image',
+                            './assets/images/speaker.svg!image',
+                            ];
+
+            console.log ("requiring...");
+
+            require (resList,
+                        function () {
+                            console.log ("required...");
+                            imgResources = arguments;
+                            pluginFunction.call (this, args, arguments);
+                        }.bind(this),
+                        function (err) {
+                            console.log ("require error");
+                            requireErr (err);
+                        }
+                    );
+        }
+
+        else {
+            pluginFunction.call (this, args, imgResources);
+        }
     
     };
         
