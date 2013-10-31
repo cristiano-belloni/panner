@@ -182,6 +182,30 @@ define(['require'], function(require) {
             }
         };
 
+        Field.prototype.setPosAngle = function(p, a) {
+
+            if (p && p.x !== null && p.y !== null) {
+                this.point = {x: p.x, y: p.y};
+                // Update the state
+                this.state.position = {x: p.x, y: p.y};
+                // Re-render the canvas.
+                this.render();
+                // Callback.
+                if (this.callback) {
+                    // Callback with -0.5 < x, y < 0.5
+                    this.callback({x: this.point.x - this.center.x,
+                        y: this.point.y - this.center.y});
+                }
+            }
+
+            this.angle = a;
+            if (this.angleCallback) {
+                this.angleCallback(this.angle);
+                this.state.angle = this.angle;
+            }
+
+        };
+
         Field.prototype.handleMouseWheel = function(e) {
             e.preventDefault();
             this.changeAngleHelper(e.wheelDelta/500);
@@ -238,15 +262,19 @@ define(['require'], function(require) {
             field.registerAngleChanged(function() {
                 sample.changeAngle.apply(sample, arguments);
             });
+
+            field.setPosAngle.apply (field, [state.position, state.angle]);
         }
 
         PositionSample.prototype.changePosition = function(position) {
             // Position coordinates are in normalized canvas coordinates
             // with -0.5 < x, y < 0.5
             if (position && position.x && position.y) {
+                console.log ("changing position to", position.x, position.y);
                 var mul = 2;
                 var x = position.x / this.size.width;
                 var y = -position.y / this.size.height;
+                console.log ("changing position 2 to", x * mul, y * mul);
                 this.panner.setPosition(x * mul, y * mul, -0.5);
             }
         };
