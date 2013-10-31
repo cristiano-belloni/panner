@@ -306,7 +306,7 @@ define(['require'], function(require) {
         var saveState = function () {
             return { data: this.pluginState };
         };
-        args.hostInterface.setSaveState (saveState);
+        args.hostInterface.setSaveState (saveState.bind(this));
 
         // Initialization made it so far: plugin is ready.
         args.hostInterface.setInstanceStatus ('ready');
