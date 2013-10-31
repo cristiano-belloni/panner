@@ -75,30 +75,37 @@ define(['require'], function(require) {
 
 
         // Draws a canvas and tracks mouse click/drags on the canvas.
-        function Field(canvas) {
+        function Field(canvas, state) {
             this.ANGLE_STEP = 0.2;
             this.canvas = canvas;
             this.isMouseInside = false;
             this.center = {x: canvas.width/2, y: canvas.height/2};
-            this.angle = 0;
+                        
             this.point = null;
+            this.angle = state.angle;
+
+            this.state = state;
+
+            if (state.position !== null) {
+                this.point = {x :state.position.x, y: state.position.y};
+            }
 
             var obj = this;
             // Setup mouse listeners.
             canvas.addEventListener('mouseover', function() {
-                obj.handleMouseOver.apply(obj, arguments)
+                obj.handleMouseOver.apply(obj, arguments);
             });
             canvas.addEventListener('mouseout', function() {
-                obj.handleMouseOut.apply(obj, arguments)
+                obj.handleMouseOut.apply(obj, arguments);
             });
             canvas.addEventListener('mousedown', function() {
-                obj.handleMouseDown.apply(obj, arguments)
+                obj.handleMouseDown.apply(obj, arguments);
             });
             canvas.addEventListener('mouseup', function() {
-                obj.handleMouseUp.apply(obj, arguments)
+                obj.handleMouseUp.apply(obj, arguments);
             });
             canvas.addEventListener('mousemove', function() {
-                obj.handleMouseMove.apply(obj, arguments)
+                obj.handleMouseMove.apply(obj, arguments);
             });
             canvas.addEventListener('mousewheel', function() {
                 obj.handleMouseWheel.apply(obj, arguments);
@@ -162,6 +169,8 @@ define(['require'], function(require) {
                 // Update the position.
                 var p = getEventPosition (e, this.canvas);
                 this.point = {x: p.x, y: p.y};
+                // Update the state
+                this.state.position = {x: p.x, y: p.y};
                 // Re-render the canvas.
                 this.render();
                 // Callback.
@@ -173,15 +182,6 @@ define(['require'], function(require) {
             }
         };
 
-        /*Field.prototype.handleKeyDown = function(e) {
-         // If it's right or left arrow, change the angle.
-         if (e.keyCode == 37) {
-         this.changeAngleHelper(-this.ANGLE_STEP);
-         } else if (e.keyCode == 39) {
-         this.changeAngleHelper(this.ANGLE_STEP);
-         }
-         };*/
-
         Field.prototype.handleMouseWheel = function(e) {
             e.preventDefault();
             this.changeAngleHelper(e.wheelDelta/500);
@@ -191,9 +191,10 @@ define(['require'], function(require) {
             this.angle += delta;
             if (this.angleCallback) {
                 this.angleCallback(this.angle);
+                this.state.angle = this.angle;
             }
             this.render();
-        }
+        };
 
         Field.prototype.registerPointChanged = function(callback) {
             this.callback = callback;
@@ -205,12 +206,11 @@ define(['require'], function(require) {
 
 // Super version: http://chromium.googlecode.com/svn/trunk/samples/audio/simple.html
 
-        function PositionSample(canvas, context, source, dest) {
+        function PositionSample(canvas, context, source, dest, state) {
             this.context = context;
             this.source = source;
             this.dest = dest;
-
-            var urls = ['http://www.html5rocks.com/en/tutorials/webaudio/games/sounds/position.wav'];
+            
             var sample = this;
             this.isPlaying = false;
             this.size = {width: pluginConf.ui.width, height: pluginConf.ui.height};
@@ -231,7 +231,7 @@ define(['require'], function(require) {
             this.panner = panner;
 
             // Create a new Area.
-            field = new Field(canvas);
+            field = new Field(canvas, state);
             field.registerPointChanged(function() {
                 sample.changePosition.apply(sample, arguments);
             });
@@ -243,7 +243,7 @@ define(['require'], function(require) {
         PositionSample.prototype.changePosition = function(position) {
             // Position coordinates are in normalized canvas coordinates
             // with -0.5 < x, y < 0.5
-            if (position) {
+            if (position && position.x && position.y) {
                 var mul = 2;
                 var x = position.x / this.size.width;
                 var y = -position.y / this.size.height;
@@ -254,12 +254,11 @@ define(['require'], function(require) {
         PositionSample.prototype.changeAngle = function(angle) {
             //  console.log(angle);
             // Compute the vector for this angle.
-            this.panner.setOrientation(Math.cos(angle), -Math.sin(angle), 1);
+            if (angle !== null) {
+                this.panner.setOrientation(Math.cos(angle), -Math.sin(angle), 1);
+            }
         };
 
-
-        var position = new PositionSample(args.canvas, args.audioContext, args.audioSources[0], args.audioDestinations[0]);
-        
         this.id = args.id;
 
         if (args.initialState && args.initialState.data) {
@@ -270,9 +269,11 @@ define(['require'], function(require) {
             /* Use default data */
             this.pluginState = {
                 position: null,
-                orientation: null
+                angle: 0
             };
         }
+
+        var position = new PositionSample(args.canvas, args.audioContext, args.audioSources[0], args.audioDestinations[0], this.pluginState);
 
         var saveState = function () {
             return { data: this.pluginState };
