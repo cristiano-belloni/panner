@@ -5,7 +5,8 @@ define(['require'], function(require) {
         osc: false,
         audioOut: 1,
         audioIn: 1,
-        version: '0.0.1-alpha1',
+        version: '0.0.1',
+	hyaId: 'Panner',
         ui: {
             type: 'canvas',
             width: 300,
