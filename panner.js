@@ -2,11 +2,10 @@ define(['require'], function(require) {
   
     var pluginConf = {
         name: "Panner",
-        osc: false,
         audioOut: 1,
         audioIn: 1,
         version: '0.0.1',
-	hyaId: 'Panner',
+        hyaId: 'Panner',
         ui: {
             type: 'canvas',
             width: 300,
@@ -152,7 +151,6 @@ define(['require'], function(require) {
         };
 
         Field.prototype.handleMouseDown = function(e) {
-            console.log ("mouse down");
             this.isMouseDown = true;
             this.handleMouseMove(e);
         };
@@ -271,11 +269,9 @@ define(['require'], function(require) {
             // Position coordinates are in normalized canvas coordinates
             // with -0.5 < x, y < 0.5
             if (position && position.x && position.y) {
-                console.log ("changing position to", position.x, position.y);
                 var mul = 2;
                 var x = position.x / this.size.width;
                 var y = -position.y / this.size.height;
-                console.log ("changing position 2 to", x * mul, y * mul);
                 this.panner.setPosition(x * mul, y * mul, -0.5);
             }
         };
@@ -317,29 +313,22 @@ define(['require'], function(require) {
     var initPlugin = function(initArgs) {
         var args = initArgs;
 
-        console.log ("initArgs", initArgs);
-
         var requireErr = function (err) {
             args.hostInterface.setInstanceStatus ('fatal', {description: 'Error loading resources'});
         }.bind(this);
-
-        console.log ("imgResources", imgResources);
 
         if (imgResources === null) {
             var resList = [ './assets/images/man.svg!image',
                             './assets/images/speaker.svg!image',
                             ];
 
-            console.log ("requiring...");
-
             require (resList,
                         function () {
-                            console.log ("required...");
                             imgResources = arguments;
                             pluginFunction.call (this, args, arguments);
                         }.bind(this),
                         function (err) {
-                            console.log ("require error");
+                            console.error ("require error");
                             requireErr (err);
                         }
                     );
